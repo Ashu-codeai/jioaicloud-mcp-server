@@ -10,7 +10,7 @@ Local Model Context Protocol (MCP) server for managing your **JioAICloud** backu
 - First-time OTP helpers when no local session exists yet
 - Browse / search backups (photos, videos, documents)
 - Create / list / rename / move-into / trash **folder albums**
-- List / create native JioAICloud board albums, and **add Drive files** into boards
+- List / create / add-to / delete native JioAICloud board albums
 - Storage quota summary
 - Duplicate detection (checksum, else name+size)
 - Safe deletes (dry-run by default; trash API)
@@ -103,13 +103,13 @@ You can also call `jio_import_session` with userData JSON exported from the brow
 | `jio_rename_album` | Rename a folder album |
 | `jio_move_to_album` | Move files/folders into a folder album |
 | `jio_add_to_board` | Add Drive files into a native board album (`boardId` + `ids`) |
-| `jio_delete_album` | Trash folder album(s) (`dry_run` default) |
+| `jio_delete_album` | Delete folder albums (trash) or board albums (`kind=board`, `dry_run` default) |
 
 ### Albums notes
 
 - **Folder albums** (`kind=folder`) are normal My Files folders — this is what the organize scripts use (year/month albums under `Photo Albums`).
-- **Board albums** (`kind=board`) are native JioAICloud Albums. Create/list work; add existing Drive files with `jio_add_to_board` (`POST /boards/{boardKey}/addition`).
-- `jio_delete_album` only supports folder albums (trash). Native board delete is not wired yet.
+- **Board albums** (`kind=board`) are native JioAICloud Albums. Create/list with album tools; add Drive files with `jio_add_to_board`; delete/leave with `jio_delete_album` (`kind=board`, `PUT /invites/boards/{boardKey}/unjoin`). Board delete does not trash the underlying Drive files.
+- Folder album delete uses Trash (recoverable). Board unjoin removes the album from your list.
 
 ### Delete safety
 

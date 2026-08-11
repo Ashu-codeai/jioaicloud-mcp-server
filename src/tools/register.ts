@@ -31,6 +31,7 @@ import {
   addFilesToBoardAlbum,
   createBoardAlbum,
   createFolderAlbum,
+  deleteBoardAlbums,
   deleteFolderAlbums,
   listBoardAlbums,
   listFolderAlbums,
@@ -655,15 +656,19 @@ export function registerTools(server: McpServer, config: AppConfig): void {
     "jio_delete_album",
     {
       description:
-        "Move folder album(s) to Trash by objectKey ids. dry_run=true by default. Real delete requires dry_run=false and confirm=true. Native board album delete is not supported yet.",
+        "Delete albums. kind=folder moves folder album(s) to Trash by objectKey. kind=board deletes/leaves native board albums by boardKey (PUT /invites/boards/{id}/unjoin). dry_run=true by default; real delete requires dry_run=false and confirm=true. Board delete does not trash Drive files.",
       inputSchema: z.object({
         ids: z.array(z.string()).min(1).max(MAX_DELETE_BATCH),
+        kind: z.enum(["folder", "board"]).optional().default("folder"),
         dry_run: z.boolean().optional().default(true),
         confirm: z.boolean().optional().default(false),
       }),
     },
-    async ({ ids, dry_run, confirm }) => {
+    async ({ ids, kind, dry_run, confirm }) => {
       try {
+        if (kind === "board") {
+          return text(await deleteBoardAlbums(client, ids, { dry_run, confirm }));
+        }
         return text(await deleteFolderAlbums(client, ids, { dry_run, confirm }));
       } catch (err) {
         return errorResult(err);

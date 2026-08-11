@@ -124,4 +124,12 @@ export class JioClient {
     const url = path.startsWith("http") ? path : `${ENDPOINTS.boardURL}${path}`;
     return this.request<T>("POST", url, { body });
   }
+
+  async boardPut<T = Record<string, unknown>>(
+    path: string,
+    body: unknown
+  ): Promise<T> {
+    const url = path.startsWith("http") ? path : `${ENDPOINTS.boardURL}${path}`;
+    return this.request<T>("PUT", url, { body });
+  }
 }

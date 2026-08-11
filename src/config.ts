@@ -47,6 +47,8 @@ export const PATHS = {
   albumDetails: "/boards",
   /** POST body: { objects: [{ objectKey }] } */
   boardAddition: (boardKey: string) => `/boards/${boardKey}/addition`,
+  /** PUT body: [] — owner delete / member leave */
+  boardUnjoin: (boardKey: string) => `/invites/boards/${boardKey}/unjoin`,
 } as const;
 
 export const PAGE_LIMIT = 100;

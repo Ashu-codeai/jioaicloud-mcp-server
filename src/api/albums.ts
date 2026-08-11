@@ -179,7 +179,7 @@ export async function deleteFolderAlbums(
     throw new Error("Max 50 albums per delete call");
   }
   if (dryRun) {
-    return { dry_run: true, wouldTrash: ids, count: ids.length };
+    return { dry_run: true, kind: "folder", wouldTrash: ids, count: ids.length };
   }
   if (!confirm) {
     throw new Error(
@@ -187,7 +187,59 @@ export async function deleteFolderAlbums(
     );
   }
   const result = await trashFiles(client, ids);
-  return { dry_run: false, trashed: ids, result };
+  return { dry_run: false, kind: "folder", trashed: ids, result };
+}
+
+/**
+ * Delete (owner) or leave (member) native board albums via
+ * PUT /invites/boards/{boardKey}/unjoin with body [].
+ */
+export async function deleteBoardAlbums(
+  client: JioClient,
+  ids: string[],
+  opts: { dry_run?: boolean; confirm?: boolean } = {}
+): Promise<Record<string, unknown>> {
+  const dryRun = opts.dry_run !== false;
+  const confirm = opts.confirm === true;
+  if (!ids.length) throw new Error("ids must not be empty");
+  if (ids.length > 50) {
+    throw new Error("Max 50 board albums per delete call");
+  }
+  if (dryRun) {
+    return {
+      dry_run: true,
+      kind: "board",
+      wouldDelete: ids,
+      count: ids.length,
+      note: "Owner delete / member leave via PUT .../unjoin. Drive files are not trashed.",
+    };
+  }
+  if (!confirm) {
+    throw new Error(
+      "Destructive board album delete requires dry_run=false AND confirm=true"
+    );
+  }
+
+  const deleted: string[] = [];
+  const failed: { id: string; error: string }[] = [];
+  for (const boardId of ids) {
+    try {
+      await client.boardPut(PATHS.boardUnjoin(boardId), []);
+      deleted.push(boardId);
+    } catch (err) {
+      failed.push({
+        id: boardId,
+        error: err instanceof Error ? err.message : String(err),
+      });
+    }
+  }
+  return {
+    dry_run: false,
+    kind: "board",
+    deleted,
+    failed,
+    count: deleted.length,
+  };
 }
 
 function normalizeBoard(b: Record<string, unknown>): BoardAlbum {
