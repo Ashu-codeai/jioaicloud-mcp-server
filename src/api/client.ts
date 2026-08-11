@@ -109,4 +109,19 @@ export class JioClient {
   async securityGet<T = Record<string, unknown>>(path: string): Promise<T> {
     return this.request<T>("GET", `${ENDPOINTS.securityURL}${path}`);
   }
+
+  async boardGet<T = Record<string, unknown>>(pathAndQuery: string): Promise<T> {
+    const url = pathAndQuery.startsWith("http")
+      ? pathAndQuery
+      : `${ENDPOINTS.boardURL}${pathAndQuery}`;
+    return this.request<T>("GET", url);
+  }
+
+  async boardPost<T = Record<string, unknown>>(
+    path: string,
+    body: unknown
+  ): Promise<T> {
+    const url = path.startsWith("http") ? path : `${ENDPOINTS.boardURL}${path}`;
+    return this.request<T>("POST", url, { body });
+  }
 }

@@ -9,6 +9,8 @@ Local Model Context Protocol (MCP) server for managing your **JioAICloud** backu
 - Auth with Mobile + Passphrase (saved session for day-to-day use)
 - First-time OTP helpers when no local session exists yet
 - Browse / search backups (photos, videos, documents)
+- Create / list / rename / move-into / trash **folder albums**
+- List / create native JioAICloud board albums
 - Storage quota summary
 - Duplicate detection (checksum, else name+size)
 - Safe deletes (dry-run by default; trash API)
@@ -53,11 +55,13 @@ Add to your Cursor MCP settings (`mcp.json`):
     "jioaicloud": {
       "command": "node",
       "args": ["dist/index.js"],
-      "cwd": "C:\\Users\\Samriti Chaudhary\\.cursor\\projects\\jio-mcp-server"
+      "cwd": "/absolute/path/to/jio-mcp-server"
     }
   }
 }
 ```
+
+On Windows, set `cwd` to your full project path with escaped backslashes, e.g. `"C:\\path\\to\\jio-mcp-server"`.
 
 Put credentials in the project `.env` only (not in `mcp.json`). Run `npm run build` after code changes.
 
@@ -94,6 +98,17 @@ You can also call `jio_import_session` with userData JSON exported from the brow
 | `jio_delete_duplicates` | Trash duplicate candidates (`dry_run` default) |
 | `jio_download_file` | Download to `downloads/` |
 | `jio_export_inventory` | Export JSON/CSV inventory |
+| `jio_list_albums` | List folder albums (`kind=folder`) or native boards (`kind=board`) |
+| `jio_create_album` | Create folder album or native board album |
+| `jio_rename_album` | Rename a folder album |
+| `jio_move_to_album` | Move files/folders into a folder album |
+| `jio_delete_album` | Trash folder album(s) (`dry_run` default) |
+
+### Albums notes
+
+- **Folder albums** (`kind=folder`) are normal My Files folders — this is what the organize scripts use (year/month albums under `Photo Albums`).
+- **Board albums** (`kind=board`) are native JioAICloud Albums. Create/list work; adding files into boards is not reliably supported via API yet.
+- `jio_delete_album` only supports folder albums (trash). Native board delete is not wired yet.
 
 ### Delete safety
 

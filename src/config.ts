@@ -25,6 +25,7 @@ export const ENDPOINTS = {
   nmsURL: "https://jaws-api.jioaicloud.com",
   downloadURL: "https://jaws-dl.jioaicloud.com",
   aseURL: "https://jaws-api.jioaicloud.com",
+  boardURL: "https://boards.jioaicloud.com",
 } as const;
 
 export const PATHS = {
@@ -41,6 +42,9 @@ export const PATHS = {
   deleteForever: "/delete",
   searchKeyword: "/ase/search/keyword",
   ping: "/nms/ping",
+  createFolder: "/nms/folders",
+  albumsList: "/boards/sync/initial",
+  albumDetails: "/boards",
 } as const;
 
 export const PAGE_LIMIT = 100;

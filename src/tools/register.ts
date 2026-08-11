@@ -27,6 +27,15 @@ import { storageUsage } from "../api/storage.js";
 import { downloadFile, exportInventory } from "../api/download.js";
 import { duplicateReport, findDuplicates } from "../duplicates/detect.js";
 import { assertDeleteAllowed, resolveDeleteIds } from "../duplicates/policy.js";
+import {
+  createBoardAlbum,
+  createFolderAlbum,
+  deleteFolderAlbums,
+  listBoardAlbums,
+  listFolderAlbums,
+  moveToAlbum,
+  renameFolderAlbum,
+} from "../api/albums.js";
 
 function text(data: unknown) {
   return {
@@ -511,4 +520,130 @@ export function registerTools(server: McpServer, config: AppConfig): void {
     }
   );
 
-  }
+  server.registerTool(
+    "jio_list_albums",
+    {
+      description:
+        "List albums. kind=folder lists folders under a parent (default root) — these are the album folders used for organizing media. kind=board lists native JioAICloud Albums.",
+      inputSchema: z.object({
+        kind: z.enum(["folder", "board"]).optional().default("folder"),
+        parentId: z
+          .string()
+          .optional()
+          .describe("Parent folder key when kind=folder (defaults to root)"),
+        limit: z.number().int().min(1).max(1000).optional(),
+        nextLink: z.string().optional(),
+      }),
+    },
+    async ({ kind, parentId, limit, nextLink }) => {
+      try {
+        if (kind === "board") {
+          return text(await listBoardAlbums(client));
+        }
+        return text(await listFolderAlbums(client, config, { parentId, limit, nextLink }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "jio_create_album",
+    {
+      description:
+        "Create an album. kind=folder creates a My Files folder (recommended for organizing photos/videos). kind=board creates a native JioAICloud Album (empty; adding files to boards is not reliably supported yet).",
+      inputSchema: z.object({
+        name: z.string().min(1).max(100),
+        kind: z.enum(["folder", "board"]).optional().default("folder"),
+        parentId: z
+          .string()
+          .optional()
+          .describe("Parent folder key for kind=folder (defaults to root)"),
+        description: z
+          .string()
+          .optional()
+          .describe("Optional description for kind=board"),
+      }),
+    },
+    async ({ name, kind, parentId, description }) => {
+      try {
+        if (kind === "board") {
+          return text(await createBoardAlbum(client, { name, description }));
+        }
+        return text(await createFolderAlbum(client, config, { name, parentId }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "jio_rename_album",
+    {
+      description:
+        "Rename a folder album by objectKey/id. parentId should be the current parent folder key when known.",
+      inputSchema: z.object({
+        id: z.string().describe("Album/folder objectKey"),
+        name: z.string().min(1).max(100),
+        parentId: z.string().optional(),
+      }),
+    },
+    async ({ id, name, parentId }) => {
+      try {
+        return text(await renameFolderAlbum(client, config, { id, name, parentId }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "jio_move_to_album",
+    {
+      description:
+        "Move files or folders into a folder album by destination albumId (folder objectKey). Pass optional items[] with name/objectType/sourceName for best results.",
+      inputSchema: z.object({
+        albumId: z.string().describe("Destination folder album objectKey"),
+        ids: z.array(z.string()).min(1).max(50),
+        items: z
+          .array(
+            z.object({
+              id: z.string(),
+              name: z.string().optional(),
+              objectType: z.string().optional(),
+              sourceName: z.string().optional(),
+              mimeType: z.string().optional(),
+            })
+          )
+          .optional(),
+      }),
+    },
+    async ({ albumId, ids, items }) => {
+      try {
+        return text(await moveToAlbum(client, config, { albumId, ids, items }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "jio_delete_album",
+    {
+      description:
+        "Move folder album(s) to Trash by objectKey ids. dry_run=true by default. Real delete requires dry_run=false and confirm=true. Native board album delete is not supported yet.",
+      inputSchema: z.object({
+        ids: z.array(z.string()).min(1).max(MAX_DELETE_BATCH),
+        dry_run: z.boolean().optional().default(true),
+        confirm: z.boolean().optional().default(false),
+      }),
+    },
+    async ({ ids, dry_run, confirm }) => {
+      try {
+        return text(await deleteFolderAlbums(client, ids, { dry_run, confirm }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    }
+  );
+}
