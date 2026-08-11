@@ -150,11 +150,9 @@ export async function trashFiles(
   client: JioClient,
   objectKeys: string[]
 ): Promise<Record<string, unknown>> {
-  const objects = objectKeys.map((objectKey) => ({
-    objectKey,
-    operation: "TRASH",
-  }));
-  return client.nmsPut(`${PATHS.nmsMetadata}${PATHS.trash}`, { objects });
+  // Web app sends { objectKeys: [...] }. The older { objects: [{ operation: "TRASH" }] }
+  // shape returns HTTP 200 with empty trashObjects and does not move files.
+  return client.nmsPut(`${PATHS.nmsMetadata}${PATHS.trash}`, { objectKeys });
 }
 
 export async function collectAll(
