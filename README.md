@@ -10,7 +10,7 @@ Local Model Context Protocol (MCP) server for managing your **JioAICloud** backu
 - First-time OTP helpers when no local session exists yet
 - Browse / search backups (photos, videos, documents)
 - Create / list / rename / move-into / trash **folder albums**
-- List / create native JioAICloud board albums
+- List / create native JioAICloud board albums, and **add Drive files** into boards
 - Storage quota summary
 - Duplicate detection (checksum, else name+size)
 - Safe deletes (dry-run by default; trash API)
@@ -102,12 +102,13 @@ You can also call `jio_import_session` with userData JSON exported from the brow
 | `jio_create_album` | Create folder album or native board album |
 | `jio_rename_album` | Rename a folder album |
 | `jio_move_to_album` | Move files/folders into a folder album |
+| `jio_add_to_board` | Add Drive files into a native board album (`boardId` + `ids`) |
 | `jio_delete_album` | Trash folder album(s) (`dry_run` default) |
 
 ### Albums notes
 
 - **Folder albums** (`kind=folder`) are normal My Files folders — this is what the organize scripts use (year/month albums under `Photo Albums`).
-- **Board albums** (`kind=board`) are native JioAICloud Albums. Create/list work; adding files into boards is not reliably supported via API yet.
+- **Board albums** (`kind=board`) are native JioAICloud Albums. Create/list work; add existing Drive files with `jio_add_to_board` (`POST /boards/{boardKey}/addition`).
 - `jio_delete_album` only supports folder albums (trash). Native board delete is not wired yet.
 
 ### Delete safety

@@ -45,6 +45,8 @@ export const PATHS = {
   createFolder: "/nms/folders",
   albumsList: "/boards/sync/initial",
   albumDetails: "/boards",
+  /** POST body: { objects: [{ objectKey }] } */
+  boardAddition: (boardKey: string) => `/boards/${boardKey}/addition`,
 } as const;
 
 export const PAGE_LIMIT = 100;

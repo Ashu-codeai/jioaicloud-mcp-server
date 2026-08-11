@@ -28,6 +28,7 @@ import { downloadFile, exportInventory } from "../api/download.js";
 import { duplicateReport, findDuplicates } from "../duplicates/detect.js";
 import { assertDeleteAllowed, resolveDeleteIds } from "../duplicates/policy.js";
 import {
+  addFilesToBoardAlbum,
   createBoardAlbum,
   createFolderAlbum,
   deleteFolderAlbums,
@@ -551,7 +552,7 @@ export function registerTools(server: McpServer, config: AppConfig): void {
     "jio_create_album",
     {
       description:
-        "Create an album. kind=folder creates a My Files folder (recommended for organizing photos/videos). kind=board creates a native JioAICloud Album (empty; adding files to boards is not reliably supported yet).",
+        "Create an album. kind=folder creates a My Files folder (recommended for organizing photos/videos). kind=board creates a native JioAICloud Album; use jio_add_to_board to add existing Drive files.",
       inputSchema: z.object({
         name: z.string().min(1).max(100),
         kind: z.enum(["folder", "board"]).optional().default("folder"),
@@ -601,7 +602,7 @@ export function registerTools(server: McpServer, config: AppConfig): void {
     "jio_move_to_album",
     {
       description:
-        "Move files or folders into a folder album by destination albumId (folder objectKey). Pass optional items[] with name/objectType/sourceName for best results.",
+        "Move files or folders into a folder album by destination albumId (folder objectKey). Pass optional items[] with name/objectType/sourceName for best results. For native board albums, use jio_add_to_board instead.",
       inputSchema: z.object({
         albumId: z.string().describe("Destination folder album objectKey"),
         ids: z.array(z.string()).min(1).max(50),
@@ -621,6 +622,29 @@ export function registerTools(server: McpServer, config: AppConfig): void {
     async ({ albumId, ids, items }) => {
       try {
         return text(await moveToAlbum(client, config, { albumId, ids, items }));
+      } catch (err) {
+        return errorResult(err);
+      }
+    }
+  );
+
+  server.registerTool(
+    "jio_add_to_board",
+    {
+      description:
+        "Add existing Drive files into a native JioAICloud board album by boardKey. Files stay in My Files (link/copy into the board). Max 50 ids per call.",
+      inputSchema: z.object({
+        boardId: z.string().describe("Destination board album boardKey"),
+        ids: z
+          .array(z.string())
+          .min(1)
+          .max(50)
+          .describe("Drive objectKey ids to add"),
+      }),
+    },
+    async ({ boardId, ids }) => {
+      try {
+        return text(await addFilesToBoardAlbum(client, { boardId, ids }));
       } catch (err) {
         return errorResult(err);
       }

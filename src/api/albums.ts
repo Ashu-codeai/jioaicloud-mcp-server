@@ -234,6 +234,61 @@ export async function createBoardAlbum(
   return normalizeBoard(body);
 }
 
+export interface BoardAdditionResult {
+  board: BoardAlbum;
+  added: string[];
+  objects: Record<string, unknown>[];
+  raw: Record<string, unknown>;
+}
+
+/**
+ * Add existing Drive files into a native board album (does not move/remove
+ * them from My Files). Uses POST /boards/{boardKey}/addition.
+ */
+export async function addFilesToBoardAlbum(
+  client: JioClient,
+  opts: { boardId: string; ids: string[] }
+): Promise<BoardAdditionResult> {
+  if (!opts.boardId) throw new Error("boardId is required");
+  if (!opts.ids.length) throw new Error("ids must not be empty");
+  if (opts.ids.length > 50) {
+    throw new Error("Max 50 files per board addition call");
+  }
+
+  const raw = await client.boardPost<Record<string, unknown>>(
+    PATHS.boardAddition(opts.boardId),
+    {
+      objects: opts.ids.map((objectKey) => ({ objectKey })),
+    }
+  );
+
+  const boardRaw = (raw.board as Record<string, unknown>) || {};
+  const objects = Array.isArray(raw.objects)
+    ? (raw.objects as Record<string, unknown>[])
+    : [];
+  const added = objects
+    .map((o) => String(o.objectKey || ""))
+    .filter(Boolean);
+  // API may return board with updated counts even when objects[] is sparse
+  if (!added.length && opts.ids.length) {
+    const filesCount = Number(boardRaw.filesCount ?? 0);
+    if (filesCount > 0) {
+      return {
+        board: normalizeBoard(boardRaw),
+        added: opts.ids,
+        objects,
+        raw,
+      };
+    }
+  }
+  return {
+    board: normalizeBoard(boardRaw.boardKey ? boardRaw : { boardKey: opts.boardId }),
+    added: added.length ? added : opts.ids,
+    objects,
+    raw,
+  };
+}
+
 function summarizeMutation(
   raw: Record<string, unknown>,
   requestedIds: string[]
