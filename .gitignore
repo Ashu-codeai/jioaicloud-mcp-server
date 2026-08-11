@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.tmp/
+.session/
+downloads/
+.env
+*.log
+.DS_Store

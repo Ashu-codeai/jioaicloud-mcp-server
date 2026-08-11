@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "jioaicloud": {
+      "command": "C:\\Program Files\\nodejs\\node.exe",
+      "args": [
+        "C:\\Users\\Samriti Chaudhary\\.cursor\\projects\\jio-mcp-server\\dist\\index.js"
+      ],
+      "cwd": "C:\\Users\\Samriti Chaudhary\\.cursor\\projects\\jio-mcp-server",
+      "env": {
+        "DOTENV_CONFIG_QUIET": "true"
+      }
+    }
+  }
+}
